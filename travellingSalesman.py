@@ -7,7 +7,7 @@
 from sys import argv
 from random import shuffle, choice
 
-from nQueensResources import write, graphArray, overlay
+from travellingSalesmanResources import createImage
 from math import sqrt
 import time
 import heapq
@@ -18,15 +18,17 @@ import os.path
 
 def main():	
 
-	cities = readFile( "citiesBig.txt" )
+	cities = readFile( "cities.txt" )
 
 	print( score( cities ) )
 	print( cities )
 
-	cities = hillClimb( cities )
+	results = hillClimb( cities )
 
-	print( "Score: ", score( cities[0] ) )
-	print( "Steps: ", cities[1] ) 
+	print( "Score: ", score( results[0] ) )
+	print( "Steps: ", results[1] ) 
+
+	createImage( results[0] , "travel.ppm" )
 
 	'''for k in range( 10 ):	
 		for i in range( 4, 15 ):
@@ -163,8 +165,6 @@ def readFile( filename ):
 		cities.append( (float(x), float(y) ) )
 
 	return cities
-
-
 
 
 main()
