@@ -5,10 +5,10 @@
 #
 
 from sys import argv
-from random import shuffle, choice
+from random import shuffle, choice, randint
 
 from travellingSalesmanResources import createImage, score
-from math import sqrt
+from math import sqrt, atan2
 import time
 import heapq
 import pickle
@@ -19,109 +19,197 @@ import os.path
 def main():	
 
 	cities = readFile( "cities.txt" )
+	cities = orderRadially( cities )
 
-	print( score( cities ) )
-	print( cities )
+	result = geneticAlg( cities, len( cities ), 10, .25, 10 )
 
-	results = hillClimb( cities )
+	print( "Score: ", score( result ) )
 
-	print( "Score: ", score( results[0] ) )
-	print( "Steps: ", results[1] ) 
+	createImage( result , "travel.ppm" )
 
-	createImage( results[0] , "travel.ppm" )
+#Takes in the cities and orders them by their angle from the center.
+def orderRadially( cities ):
+	sumX = 0
+	sumY = 0
 
-	'''for k in range( 10 ):	
-		for i in range( 4, 15 ):
+	for city in cities: 
+		sumX += city[0]
+		sumY += city[1]
 
-			data = pickle.load( open( "nQueensData.pkl", "rb" ) )
+	xctr = sumX / len( cities )
+	yctr = sumY / len( cities )
 
-			tick = time.clock()
+	tempArr = []
 
-			board = genRandomArray( i )
-			board = findSolution( board, i )
+	for city in cities:
+		t = atan2( city[1] - yctr , city[0] - xctr )
+		tempArr.append( (t, city) )
 
-			print( board, i )
+	tempArr.sort()
 
-			tock = time.clock()
+	finalArr = []
 
-			if i not in data:
-				data[i] = []
+	for city in tempArr:
 
-			data[i].append( (tock-tick, board[1]) )
+		finalArr.append( city[1] )
 
-			pickle.dump( data, open( "nQueensData.pkl", "wb" ) )'''
+	return finalArr
+
+def geneticAlg( cities, popLimit, generations, percentShuffle, numChildren ):
+
+	#Create the starting generation.
+	population = []
+
+	for i in range( popLimit ):
+		shuffle( cities )
+		population.append ( (score(cities), cities[:]) )
+
+	population.sort()
+
+	for t in range( generations ):
+
+		#Start by shuffling the mates some amount.
+		skip = int( 1/percentShuffle )
+
+		index = 2
+
+		while index < len( population ):
+			swapIndex = randint(0, len(population) - 1 )
+
+			temp = population[index]
+			population[index] = population[swapIndex]
+			population[swapIndex] = temp
+
+			index += skip
+
+		newGeneration = []
+
+		index = 0
+
+		while index < len( population ):
+
+			#Population is a list of (score, order) so choose the orders to mate.
+			children = mate( population[0][1], population[1][1], numChildren )
+
+			for child in children:
+				newGeneration.append( (score(child), child) )
+
+			index += 2
+
+		population.sort()
+
+		#Keep only the population limit orders.
+		population = newGeneration[0:popLimit]
+
+	#Return the best.
+	return population[0]
+
+def mate( a, b, numChildren):
+
+	children = []
+
+	for i in range( numChildren ):
+
+		child = []
+		inChild = {}
+
+		for element in a:
+			inChild[element] = False
+		for element in b:
+			inChild[element] = False
+		#Start with the a random element in a.
+
+		startIndex = randint( 0, len(a) - 1 )
+
+		child.append( a[ startIndex] )
+		currElement = a[startIndex]
+
+		#Find the indeces of the element in both arrays.
+		aIndex = startIndex
+		bIndex = b.index( currElement )
+
+		#Repeat the process until you fill the array.
+		while len( child ) < len( a ):
+
+			#We're comparing the next elements in the list - essentially the orders.
+			aNextElement = a[(aIndex+1) % len(a) ]
+			bNextElement = b[(bIndex+1) % len(b) ]
+
+			#If the parents agree on the next element, AND it hasn't been added yet, append that similarity.
+			#The next element would simply be the next one in the list.
+
+			if aNextElement == bNextElement and not inChild[ aNextElement ]:
+				child.append( aNextElement )
+				inChild[ aNextElement ] = True
+
+				nextElement = aNextElement
+				aIndex = (aIndex + 1) % len( a )
+				bIndex = (bIndex + 1) % len( b )
+
+			else:
+				#If either aNextElement or bNextElement hasn't been added to the child yet, go with it. However, prioritize a and b equally.
+				print( aNextElement )
+				print( bNextElement )
+				print( a.index( aNextElement ) )
+				print( b.index( bNextElement ) )
+				if not inChild[ aNextElement] and not inChild[ bNextElement ]:
+
+					if randint( 0, 1 ) == 0:
+						nextElement = aNextElement
+
+						aIndex = (aIndex + 1) % len( a )
+						bIndex = b.index( nextElement )
+
+					else:
+						nextElement = bNextElement
+
+						aIndex = a.index( nextElement )
+						bIndex = (bIndex + 1) % len( b )
+
+					child.append( nextElement )
+					inChild[ nextElement ] = True
+
+				#Next if only one of them hasn't been added to the child yet, add them.
+
+				elif not inChild[ aNextElement ]: 
+
+					child.append( aNextElement )
+					inChild[ aNextElement ] = True
+
+					aIndex = (aIndex + 1) % len( a )
+					bIndex = b.index( nextElement )
+
+				elif not inChild[ bNextElement ]:
+
+					child.append( bNextElement )
+					inChild[ bNextElement ] = True
+
+					aIndex = a.index( nextElement )
+					bIndex = (bIndex + 1) % len( b )
+
+				#Both the next elements have already been added to the child previously.
+				#Make a list of elements which aren't in child yet, and choose a random one to be the next element.
+				else:
+					possibleElements = []
+
+					for element in list( inChild.keys() ) :
+						if not inChild[ element ]:
+							possibleElements.append( element )
+
+					nextElement = choice( possibleElements )
+
+					child.append( nextElement )
+					inChild[ nextElement ] = True
+
+					aIndex = a.index( nextElement )
+					bIndex = b.index( nextElement )
 
 
+		children.append( child )
 
-#Attempt to find a solution to given board.
-def hillClimb( startState ):
-
-	traversed = {}
+	return children
 
 
-	currState = startState[:]
-	currScore = score( currState )
-	traversed[tuple(currState)] = True
-
-	shuffleCount = 0
-	stepCount = 0
-
-	localMaxima = False
-
-	while not localMaxima:
-		print( score( currState) )
-		nextState = currState
-		newState = currState[:]
-
-		betterScore = False
-
-		currScore = score( currState )
-
-		#Swap all permutationsself.
-
-		improvement = False
-		for a in range( len(startState) - 1):
-			for b in range( a + 1, len(startState) ):
-
-				if not improvement:
-					temp = newState[a]
-					newState[a] = newState[b]
-					newState[b] = temp
-
-					newStateScore = score( newState )
-
-					#If the new board is an improvement, keep track of it.
-					if newStateScore < currScore:
-						currScore = newStateScore
-						betterScore = True
-						nextState = newState[:] 
-						improvement = True
-
-					#If the new board is equal, make sure we haven't traversed it before and switch to it.
-					elif newStateScore == currScore and tuple(newState) not in traversed:
-
-						betterScore = True
-						nextState = newState[:]
-						improvement = True
-
-					temp = newState[a]
-					newState[a] = newState[b]
-					newState[b] = temp
-
-		#Randomly choose a score from the possible scores, and go with it.
-
-		#If we couldn't find a better board, re shuffle it.
-		if not betterScore:
-			#Make sure we clear the traversed boards, in case our path brings us to them again.
-			localMaxima = True
-
-		currState = nextState
-
-		traversed[tuple(currState)] = True
-
-		stepCount += 1
-
-	return ( currState, stepCount )
 
 
 def genRandomArray( N ):
@@ -137,8 +225,6 @@ def readFile( filename ):
 	f = open( filename, 'r' ).read().split()
 
 	numcities = f.pop(0)
-
-	print( "Numcities: ", numcities )
 
 	for i in range( int(numcities) ):
 

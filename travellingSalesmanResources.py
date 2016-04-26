@@ -89,7 +89,6 @@ def createImage( cities, filename ):
 
     for city in cities:
 
-        print( city )
         minX = min( city[0], minX )
         maxX = max( city[0], maxX )
 
@@ -126,7 +125,6 @@ def createImage( cities, filename ):
         travelY = currY
         
         while sqrt( (travelX - nextX)**2 + (travelY - nextY)**2 ) > 1:
-            print( (travelX - nextX, travelY - nextY) )
             image[320 - int(travelX)][int(travelY)] = (0, 0, 0)
 
             travelX += dx
@@ -161,9 +159,6 @@ def createImage( cities, filename ):
         for pixel in pixels:
 
             image[startY-pixel[0]][startX + pixel[1] ] = (0, 0, 0)
-            '''image[startY-2*pixel[0]][startX + 2*pixel[1] + 1] = (0, 0, 0)
-            image[startY-2*pixel[0] - 1][startX + 2*pixel[1] ] = (0, 0, 0)
-            image[startY-2*pixel[0] - 1][startX + 2*pixel[1] + 1] = (0, 0, 0)'''
 
         startX -= 5
 
