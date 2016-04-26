@@ -7,7 +7,7 @@
 from sys import argv
 from random import shuffle, choice
 
-from travellingSalesmanResources import createImage
+from travellingSalesmanResources import createImage, score
 from math import sqrt
 import time
 import heapq
@@ -122,22 +122,6 @@ def hillClimb( startState ):
 		stepCount += 1
 
 	return ( currState, stepCount )
-
-#Find how many pairs of queens are capable of attacking each other.
-
-def score( cities ):
-
-	score = 0
-
-	length = len( cities )
-
-	for i in range( length ):
-		cityA = cities[i]
-		cityB = cities[(i+1)%length]
-
-		score += sqrt( (cityA[0]-cityB[0])**2 + (cityA[1]-cityB[1])**2 )
-
-	return score
 
 
 def genRandomArray( N ):

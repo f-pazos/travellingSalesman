@@ -136,4 +136,51 @@ def createImage( cities, filename ):
             for dy in range( -1, 2 ):
                 image[320 - int(currX+dx)][int(currY+dy)] = (255, 0, 0)
                 image[320 - int(nextX+dx)][int(nextY+dy)] = (255, 0, 0)
+
+    nums  = []
+    nums.append( [(0,0), (0,1), (0,2), (1,0), (1,2), (2,0), (2,2), (3,0), (3,2), (4,0), (4,1), (4,2)] )         #0
+    nums.append( [(0,2), (1,2), (2,2), (3,2), (4,2)] )                                                          #1
+    nums.append( [(0,0), (0,1), (0,2), (1,0), (2,0), (2,1), (2,2), (3,2), (4,0), (4,1), (4,2)] )                #2
+    nums.append( [(0,0), (0,1), (0,2), (1,2), (2,0), (2,1), (2,2), (3,2), (4,0), (4,1), (4,2)] )                #3  
+    nums.append( [(0,2), (1,2), (2,0), (2,1), (2,2), (3,0), (3,2), (4,0),(4,2)] )                               #4
+    nums.append( [(0,0), (0,1), (0,2), (1,2), (2,0), (2,1), (2,2), (3,0), (4,0), (4,1), (4,2)] )                #5
+    nums.append( [(0,0), (0,1), (0,2), (1,0), (1,2), (2,0), (2,1), (2,2), (3,0), (4,0), (4,1), (4,2)] )         #6
+    nums.append( [(0,2), (1,2), (2,2), (3,2), (4,0), (4,1), (4,2)])                                             #7
+    nums.append( [(0,0), (0,1), (0,2), (1,0), (1,2), (2,0), (2,1), (2,2), (3,0), (3,2), (4,0), (4,1), (4,2)] )  #8
+    nums.append( [(0,2), (1,2), (2,0), (2,1), (2,2), (3,0), (3,2), (4,0), (4,1), (4,2)])                        #9
+
+    num = str( int(score( cities ) ) )
+
+    startX = 300
+    startY = 317
+
+    for i in range( len(num) ):
+
+        pixels = nums[ int(num[-i - 1]) ]
+
+        for pixel in pixels:
+
+            image[startY-pixel[0]][startX + pixel[1] ] = (0, 0, 0)
+            '''image[startY-2*pixel[0]][startX + 2*pixel[1] + 1] = (0, 0, 0)
+            image[startY-2*pixel[0] - 1][startX + 2*pixel[1] ] = (0, 0, 0)
+            image[startY-2*pixel[0] - 1][startX + 2*pixel[1] + 1] = (0, 0, 0)'''
+
+        startX -= 5
+
     write( image, filename)
+
+#Find distance between all cities.
+
+def score( cities ):
+
+    score = 0
+
+    length = len( cities )
+
+    for i in range( length ):
+        cityA = cities[i]
+        cityB = cities[(i+1)%length]
+
+        score += sqrt( (cityA[0]-cityB[0])**2 + (cityA[1]-cityB[1])**2 )
+
+    return score
