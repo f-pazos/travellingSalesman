@@ -21,11 +21,12 @@ def main():
 	cities = readFile( "cities.txt" )
 	cities = orderRadially( cities )
 
-	result = geneticAlg( cities, len( cities ), 10, .25, 10 )
+	result = geneticAlg( cities, len(cities) // 2, 1000, .25, 100 )
 
-	print( "Score: ", score( result ) )
+	print( result[1] ) 
+	print( "Score: ", result[0] )
 
-	createImage( result , "travel.ppm" )
+	createImage( result[1] , "travel.ppm" )
 
 #Takes in the cities and orders them by their angle from the center.
 def orderRadially( cities ):
@@ -67,20 +68,20 @@ def geneticAlg( cities, popLimit, generations, percentShuffle, numChildren ):
 	population.sort()
 
 	for t in range( generations ):
-
+		print("success")
 		#Start by shuffling the mates some amount.
-		skip = int( 1/percentShuffle )
+		'''skip = int( 1/percentShuffle )
 
 		index = 2
 
 		while index < len( population ):
-			swapIndex = randint(0, len(population) - 1 )
+			swapIndex = randint(2, len(population) - 1 )
 
 			temp = population[index]
 			population[index] = population[swapIndex]
 			population[swapIndex] = temp
 
-			index += skip
+			index += skip'''
 
 		newGeneration = []
 
@@ -89,22 +90,34 @@ def geneticAlg( cities, popLimit, generations, percentShuffle, numChildren ):
 		while index < len( population ):
 
 			#Population is a list of (score, order) so choose the orders to mate.
-			children = mate( population[0][1], population[1][1], numChildren )
+			children = mate( population[index][1][:], population[(index + 1)%len(population)][1][:], numChildren, 10  )
+
 
 			for child in children:
 				newGeneration.append( (score(child), child) )
 
 			index += 2
 
-		population.sort()
+		newGeneration.sort()
 
 		#Keep only the population limit orders.
+
 		population = newGeneration[0:popLimit]
+		print( "Best: ", population[0][0], "Worst: ", population[-1][0])
 
 	#Return the best.
 	return population[0]
 
-def mate( a, b, numChildren):
+def mate( a, b, numChildren, maxMutations):
+
+	if not contentsIdentical( a, b ):
+		a.sort()
+		b.sort()
+
+		for i in range( len( a ) ):
+			print( a[i], " ", b[i] )
+
+		input( "PROBLEM!!")
 
 	children = []
 
@@ -115,13 +128,13 @@ def mate( a, b, numChildren):
 
 		for element in a:
 			inChild[element] = False
-		for element in b:
-			inChild[element] = False
 		#Start with the a random element in a.
 
 		startIndex = randint( 0, len(a) - 1 )
 
 		child.append( a[ startIndex] )
+		inChild[ a[ startIndex ] ]= True
+
 		currElement = a[startIndex]
 
 		#Find the indeces of the element in both arrays.
@@ -132,8 +145,8 @@ def mate( a, b, numChildren):
 		while len( child ) < len( a ):
 
 			#We're comparing the next elements in the list - essentially the orders.
-			aNextElement = a[(aIndex+1) % len(a) ]
-			bNextElement = b[(bIndex+1) % len(b) ]
+			aNextElement = a[ (aIndex+1) % len(a) ]
+			bNextElement = b[ (bIndex+1) % len(b) ]
 
 			#If the parents agree on the next element, AND it hasn't been added yet, append that similarity.
 			#The next element would simply be the next one in the list.
@@ -148,10 +161,7 @@ def mate( a, b, numChildren):
 
 			else:
 				#If either aNextElement or bNextElement hasn't been added to the child yet, go with it. However, prioritize a and b equally.
-				print( aNextElement )
-				print( bNextElement )
-				print( a.index( aNextElement ) )
-				print( b.index( bNextElement ) )
+
 				if not inChild[ aNextElement] and not inChild[ bNextElement ]:
 
 					if randint( 0, 1 ) == 0:
@@ -204,12 +214,32 @@ def mate( a, b, numChildren):
 					aIndex = a.index( nextElement )
 					bIndex = b.index( nextElement )
 
+		#Mutate the child slightly.
+
+		for i in range( randint(0, maxMutations) ):
+			firstIndex = randint( 0, len( child ) - 1 )
+			secondIndex = randint( 0, len( child ) - 1 )
+
+			temp = child[firstIndex]
+			child[firstIndex] = child[secondIndex]
+			child[secondIndex] = temp
 
 		children.append( child )
 
 	return children
 
+def contentsIdentical(a, b):
 
+	aContents = {}
+	for val in a:
+		aContents[ val ] = True
+
+	for val in b:
+		if val not in aContents:
+			print( val )
+			return False
+
+	return True
 
 
 def genRandomArray( N ):
@@ -232,7 +262,7 @@ def readFile( filename ):
 		x = f.pop(0)
 		y = f.pop(0)
 
-		cities.append( (float(x), float(y) ) )
+		cities.append( (int(float(x)), int(float(y)) ) )
 
 	return cities
 
