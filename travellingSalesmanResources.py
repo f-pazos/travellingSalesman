@@ -97,9 +97,9 @@ def createImage( cities, filename ):
 
     image = []
 
-    for r in range(320):
+    for r in range(520):
         image.append( [] )
-        for c in range(320):
+        for c in range(520):
             image[r].append( (255,255,255) )
 
 
@@ -108,11 +108,11 @@ def createImage( cities, filename ):
         currCity = cities[i]
         nextCity = cities[(i+1)%(len(cities)) ]
 
-        currX = 10 + 300*(currCity[0] - minX)/( maxX - minX ) 
-        currY = 10 + 300*(currCity[1] - minY)/( maxY - minY ) 
+        currX = 10 + 500*(currCity[0] - minX)/( maxX - minX ) 
+        currY = 10 + 500*(currCity[1] - minY)/( maxY - minY ) 
 
-        nextX = 10 + 300*(nextCity[0] - minX)/( maxX - minX ) 
-        nextY = 10 + 300*(nextCity[1] - minY)/( maxY - minY ) 
+        nextX = 10 + 500*(nextCity[0] - minX)/( maxX - minX ) 
+        nextY = 10 + 500*(nextCity[1] - minY)/( maxY - minY ) 
 
         dx = nextX - currX
         dy = nextY - currY
@@ -125,15 +125,15 @@ def createImage( cities, filename ):
         travelY = currY
         
         while sqrt( (travelX - nextX)**2 + (travelY - nextY)**2 ) > 1:
-            image[320 - int(travelX)][int(travelY)] = (0, 0, 0)
+            image[520 - int(travelX)][int(travelY)] = (0, 0, 0)
 
             travelX += dx
             travelY += dy
 
         for dx in range( -1, 2 ):
             for dy in range( -1, 2 ):
-                image[320 - int(currX+dx)][int(currY+dy)] = (255, 0, 0)
-                image[320 - int(nextX+dx)][int(nextY+dy)] = (255, 0, 0)
+                image[520 - int(currX+dx)][int(currY+dy)] = (255, 0, 0)
+                image[520 - int(nextX+dx)][int(nextY+dy)] = (255, 0, 0)
 
     nums  = []
     nums.append( [(0,0), (0,1), (0,2), (1,0), (1,2), (2,0), (2,2), (3,0), (3,2), (4,0), (4,1), (4,2)] )         #0
@@ -149,8 +149,8 @@ def createImage( cities, filename ):
 
     num = str( int(score( cities ) ) )
 
-    startX = 300
-    startY = 317
+    startX = 500
+    startY = 517
 
     for i in range( len(num) ):
 
@@ -177,5 +177,11 @@ def score( cities ):
         cityB = cities[(i+1)%length]
 
         score += sqrt( (cityA[0]-cityB[0])**2 + (cityA[1]-cityB[1])**2 )
+
+    return score
+
+def distance( cityA, cityB ):
+
+    score = sqrt( (cityA[0]-cityB[0])**2 + (cityA[1]-cityB[1])**2 )
 
     return score

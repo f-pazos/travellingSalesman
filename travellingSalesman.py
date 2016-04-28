@@ -7,11 +7,12 @@
 from sys import argv
 from random import shuffle, choice, randint
 
-from travellingSalesmanResources import createImage, score
+from travellingSalesmanResources import createImage, score, distance
 from math import sqrt, atan2
 import time
 import heapq
 import pickle
+import heapq
 import os.path
 
 #N=4 by default, or first argument.
@@ -19,16 +20,94 @@ import os.path
 def main():	
 
 	cities = readFile( "cities.txt" )
+
+	ordered = connectShortestSegments( cities )
+	for cit in ordered:
+		print( cit )
+	createImage( ordered, "test.ppm" )
+
+	'''print( "Score: ", score( cities ) )
+
 	cities = orderRadially( cities )
 
-	result = geneticAlg( cities, len(cities) // 2, 1000, .25, 100 )
+	result = geneticAlg( cities, 8, 100, .01, 8 )
 
-	print( result[1] ) 
 	print( "Score: ", result[0] )
 
-	createImage( result[1] , "travel.ppm" )
+	createImage( result[1] , "travel.ppm" )'''
 
 #Takes in the cities and orders them by their angle from the center.
+def connectShortestSegments( cities ):
+
+	distances = {}
+
+	chains = {}
+	neighbors = {}
+
+	for city in cities:
+		chains[ city ] = { city: True }
+		neighbors[ city ] = []
+		
+	q = []
+		
+	for cityA in cities:
+
+		for cityB in cities:
+			val = distance( cityA, cityB )
+
+			print( val ) 
+
+			if val > 0:
+				distances[ cityA, cityB ] = val
+				heapq.heappush( q, (val, (cityA, cityB) ) )
+	
+
+	while len( q )  >  0 and len( chains[cities[0]] ) < len( cities ):
+		#Pop the smallest distance
+		smallestDistance = heapq.heappop( q )
+
+		firstCity = smallestDistance[1][0]
+		secondCity = smallestDistance[1][1]
+
+		#Make sure they aren't in the same chains, and both cities are edges.
+		if secondCity not in chains[ firstCity ] and firstCity not in chains[ secondCity ] and len( neighbors[firstCity] ) < 2 and len( neighbors[secondCity] ) < 2:
+
+			neighbors[ firstCity ].append( secondCity )
+			neighbors[ secondCity].append( firstCity )
+
+			newChain = {}
+
+			for key in list( chains[firstCity].keys() ):
+				newChain[ key ] = True
+			for key in list( chains[secondCity].keys() ):
+				newChain[ key ] = True
+
+			chains[ firstCity ] = newChain
+			chains[ secondCity] = newChain
+
+	print( chains[cities[0] ] )
+	input( len( chains[cities[0] ]))
+
+	newOrder = [ cities[0] ]
+	prevCity = cities[0]
+	currCity = neighbors[ cities[0] ][0]
+
+	while len( newOrder ) < len( cities ):
+		newOrder.append( currCity )
+
+		#Make the next city the neighbor of the current city that we haven't been to yet.
+		nextCity = neighbors[currCity][ (neighbors[currCity].index( prevCity ) + 1 ) % 2 ]
+		prevCity = currCity
+		currCity = nextCity
+
+	return newOrder
+
+
+
+
+
+
+
 def orderRadially( cities ):
 	sumX = 0
 	sumY = 0
@@ -56,13 +135,21 @@ def orderRadially( cities ):
 
 	return finalArr
 
-def geneticAlg( cities, popLimit, generations, percentShuffle, numChildren ):
+def geneticAlg( cities, popLimit, generations, percentMutations, numChildren ):
 
 	#Create the starting generation.
 	population = []
 
+	#Sort of shuffle and add.
 	for i in range( popLimit ):
-		shuffle( cities )
+		
+		for i in range( 0, len( cities ) ):
+			if ( randint( 0, 100 ) < percentMutations * 100 ):
+				temp = cities[i]
+				rand = randint( 0, 5 )
+				cities[i] = cities[ (i + rand) % len( cities ) ]
+				cities[ (i + rand ) % len( cities ) ] = temp
+
 		population.append ( (score(cities), cities[:]) )
 
 	population.sort()
@@ -90,7 +177,7 @@ def geneticAlg( cities, popLimit, generations, percentShuffle, numChildren ):
 		while index < len( population ):
 
 			#Population is a list of (score, order) so choose the orders to mate.
-			children = mate( population[index][1][:], population[(index + 1)%len(population)][1][:], numChildren, 10  )
+			children = mate( population[index][1][:], population[(index + 1)%len(population)][1][:], numChildren, int( percentMutations * len( cities ) ) )
 
 
 			for child in children:
@@ -217,13 +304,19 @@ def mate( a, b, numChildren, maxMutations):
 		#Mutate the child slightly.
 
 		for i in range( randint(0, maxMutations) ):
-			firstIndex = randint( 0, len( child ) - 1 )
-			secondIndex = randint( 0, len( child ) - 1 )
+			index= randint( 0, len( child ) - 1 )
 
-			temp = child[firstIndex]
-			child[firstIndex] = child[secondIndex]
-			child[secondIndex] = temp
+			temp = child[index]
+			child[index] = child[(index + 1) % len( child )]
+			child[(index+1) % len( child )] = temp
 
+		for i in range( randint(0, maxMutations // 10) ):
+			index = randint(0, len(child) - 1)
+			index2 = randint( 0, len(child) - 1)
+
+			temp = child[index]
+			child[index] = child[index2]
+			child[index2] = temp
 		children.append( child )
 
 	return children
