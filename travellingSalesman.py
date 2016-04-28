@@ -8,7 +8,7 @@ from sys import argv
 from random import shuffle, choice
 
 from travellingSalesmanResources import createImage, score
-from math import sqrt
+from math import sqrt, atan2
 import time
 import heapq
 import pickle
@@ -22,7 +22,7 @@ def main():
 
 	print( score( cities ) )
 	print( cities )
-
+	cities = orderRadially( cities )
 	results = hillClimb( cities )
 
 	print( "Score: ", score( results[0] ) )
@@ -52,6 +52,32 @@ def main():
 			pickle.dump( data, open( "nQueensData.pkl", "wb" ) )'''
 
 
+def orderRadially( cities ):
+	sumX = 0
+	sumY = 0
+
+	for city in cities: 
+		sumX += city[0]
+		sumY += city[1]
+
+	xctr = sumX / len( cities )
+	yctr = sumY / len( cities )
+
+	tempArr = []
+
+	for city in cities:
+		t = atan2( city[1] - yctr , city[0] - xctr )
+		tempArr.append( (t, city) )
+
+	tempArr.sort()
+
+	finalArr = []
+
+	for city in tempArr:
+
+		finalArr.append( city[1] )
+
+	return finalArr
 
 #Attempt to find a solution to given board.
 def hillClimb( startState ):
